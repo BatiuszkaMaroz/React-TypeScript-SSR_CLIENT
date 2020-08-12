@@ -7,8 +7,8 @@ const StyledLabel = styled.label`
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  font-size: 1.6rem;
-  padding: 1rem 0;
+  font-size: 2rem;
+  margin: 1rem 0;
   color: var(--secondary);
 
   p {
@@ -97,16 +97,18 @@ const Input: React.FC<Props> = ({
     }
 
     updateValue(name, value, valid);
-  }, [touched, valid, value, inputRef]);
+  }, [touched, valid, value, inputRef, name, updateValue]);
 
   useEffect(() => {
     const valid = isValid(value, validators);
     dispatch({ type: 'INITIAL', valid, value });
+  }, []);
 
+  useEffect(() => {
     return () => {
       removeValue(name);
     };
-  }, []);
+  }, [name, removeValue]);
 
   return (
     <StyledLabel>

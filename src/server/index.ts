@@ -1,7 +1,12 @@
 import express, { NextFunction, Response, Request } from 'express';
 import proxy from 'express-http-proxy';
+import { matchRoutes } from 'react-router-config';
 import path from 'path';
+
+import routes from '../client/routes/routes';
+import { autoLogin } from '../client/store/actions/auth';
 import render from './utils/render';
+import createStore from './utils/createStore';
 
 const app = express();
 
@@ -20,10 +25,22 @@ app.use(
 app.use('/client', express.static(path.resolve(__dirname, '..', 'client')));
 
 //Render
-app.get('*', (req, res, next) => {
-  const html = render(req.url);
+app.get('*', async (req, res, next) => {
+  const context = { notFound: false };
+  const store = createStore(req);
+  await (store.dispatch as any)(autoLogin());
 
-  return res.status(200).send(html);
+  const loadPromises = matchRoutes(routes, req.path).map(({ route }) => {
+    if (route.loadData) {
+      return route.loadData(store);
+    } else {
+      return null;
+    }
+  });
+  await Promise.allSettled(loadPromises);
+
+  const html = render(req.url, store, context);
+  return res.status(context.notFound ? 404 : 200).send(html);
 });
 
 //Errors

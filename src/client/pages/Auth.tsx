@@ -1,7 +1,12 @@
-import React, { useReducer, Reducer, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
+import { useDispatch } from 'react-redux';
+
 import Input from '../components/Input';
 import Button from '../components/Button';
+
+import { auth } from '../store/actions/auth';
+import useForm from '../utils/hooks/useForm';
 import { MAX_LENGTH, MIN_LENGTH } from '../utils/validator';
 
 const StyledForm = styled.form`
@@ -13,59 +18,47 @@ const StyledForm = styled.form`
     font-size: 3rem;
     color: var(--secondary);
     text-align: center;
-    padding: 2rem;
+    margin: 2rem;
   }
 
   .inputs {
     display: flex;
     flex-flow: column;
 
-    div {
-      display: flex;
-      justify-content: space-between;
+    label {
+      &:first-child {
+        margin-top: 2rem;
+      }
+
+      &:last-child {
+        margin-bottom: 4rem;
+      }
     }
   }
 `;
 
-type Action = {
-  type: 'ADD' | 'REMOVE';
-  name: string;
-  value?: any;
-  valid?: boolean;
-};
-
-const authReducer: Reducer<any, Action> = (state, action) => {
-  switch (action.type) {
-    case 'ADD':
-      return {
-        ...state,
-        [action.name]: { value: action.value, valid: action.valid },
-      };
-    case 'REMOVE':
-      const stateCopy = { ...state };
-      delete stateCopy[action.name];
-      return stateCopy;
-    default:
-      return state;
-  }
-};
-
 const Auth: React.FC = () => {
+  const dispatch = useDispatch();
   const [type, setType] = useState<'login' | 'signup'>('login');
-  const [state, dispatch] = useReducer(authReducer, {});
+  const { state, updateValue, removeValue } = useForm();
 
   const submitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log(state);
-  };
+    const valid = Object.keys(state).reduce((acc, key) => {
+      return acc && state[key].valid;
+    }, true);
 
-  const updateValue = (name: string, value: any, valid: boolean) => {
-    dispatch({ type: 'ADD', name, value, valid });
-  };
-
-  const removeValue = (name: string) => {
-    dispatch({ type: 'REMOVE', name });
+    if (valid) {
+      dispatch(
+        auth(
+          type,
+          state?.email?.value,
+          state?.password?.value,
+          state?.name?.value,
+        ),
+      );
+    }
   };
 
   const renderName = () => {
@@ -100,12 +93,13 @@ const Auth: React.FC = () => {
       <div className='inputs'>
         {renderName()}
         <Input
+          validators={[MIN_LENGTH(5)]}
           updateValue={updateValue}
           removeValue={removeValue}
           name='email'
         />
         <Input
-          validators={[MIN_LENGTH(5)]}
+          validators={[MIN_LENGTH(5), MAX_LENGTH(10)]}
           updateValue={updateValue}
           removeValue={removeValue}
           name='password'

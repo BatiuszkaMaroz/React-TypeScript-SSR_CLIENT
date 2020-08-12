@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { createGlobalStyle } from 'styled-components';
 import { renderRoutes } from 'react-router-config';
+import { useDispatch } from 'react-redux';
 
+import { autoLogin } from './store/actions/auth';
 import routes from './routes/routes';
 import Header from './components/Header';
 
@@ -34,22 +36,17 @@ const GlobalStyles = createGlobalStyle`
   }
 
   main {
+    padding: 3rem;
     display: flex;
     justify-content: center;
   }
 `;
 
 const App: React.FC = () => {
-  // useEffect(() => {
-  //   (async () => {
-  //     const req = await fetch('/api/autologin');
-
-  //     if (req.ok) {
-  //       const data = await req.json();
-  //       console.log(data);
-  //     }
-  //   })();
-  // }, []);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(autoLogin());
+  }, [dispatch]);
 
   return (
     <>
